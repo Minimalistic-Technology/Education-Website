@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Home, Book, Calendar, GraduationCap, LogOut, Menu, X, BookOpen, UserCheck, FileText, TrendingUp } from "lucide-react";
+import { Home, Calendar, GraduationCap, LogOut,Book, Menu, X, UserCheck, FileText, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,11 +21,12 @@ const StudentSidebar = () => {
 
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, href: "/student" },
-    { name: "Schedule", icon: <Calendar size={20} />, href: "/student/courses" },
+    { name: "Schedule", icon: <Calendar size={20} />, href: "/student/schedule" },
     { name: "Attendance", icon: <UserCheck size={20} />, href: "/student/attendance" },
-    { name: "Documents", icon: <FileText size={20} />, href: "/student/documents" },
-    { name: "Progress Report", icon: <TrendingUp size={20} />, href: "/student/progress" },
+    { name: "Study Matterial", icon: <FileText size={20} />, href: "/student/studymatterials" },
+    { name: "Exam", icon: <Book size={20} />, href: "/student/exam" },
     { name: "Grades", icon: <GraduationCap size={20} />, href: "/student/grades" },
+    { name: "Documents", icon: <FileText size={20} />, href: "/student/documents" },
     { name: "Logout", icon: <LogOut size={20} />, href: "/login", isDanger: true },
   ];
 

@@ -1,16 +1,18 @@
-import Navbar from "./components/navbar";
-import ImageSlider from "./components/ImageSlider";
-import Announcements from "./components/announcements";
-import Footer from "./components/Footer";
+import React from 'react';
+import Navbar from './components/navbar';
+import Hero from './components/hero';
+import Features from './components/features';
+import Footer from './components/Footer';
 
-export default function HomePage() {
+function App() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      <Navbar/>
-      <ImageSlider />
-      <Announcements/>
-      {/* other content */}
-      <Footer/>
-    </main>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <Hero />
+      <Features />
+      <Footer />
+    </div>
   );
 }
+
+export default App;

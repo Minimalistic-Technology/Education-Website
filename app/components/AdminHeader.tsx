@@ -4,7 +4,7 @@ import Image from "next/image";
 import {ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-const StudentHeader = () => {
+const AdminHeader = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
@@ -31,7 +31,7 @@ const StudentHeader = () => {
       case 'progress': return 'Progress Report';
       case 'grades': return 'Grades';
 
-      default: return 'Student Portal';
+      default: return 'Admin Portal';
     }
   };
 
@@ -46,7 +46,7 @@ const StudentHeader = () => {
       {/* Left Section */}
       <div className={`flex items-center gap-4 ${isMobile ? 'ml-12' : ''}`}>
         <h2 className={`
-          font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent
+          font-bold bg-gradient-to-r from-red-700 to-red-700 bg-clip-text text-transparent
           ${isMobile ? 'text-lg' : 'text-xl'}
         `}>
           {isMobile ? getPageTitle() : `${getPageTitle()}`}
@@ -62,8 +62,8 @@ const StudentHeader = () => {
             <div className="flex items-center gap-2">
               {!isMobile && (
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">Alex Johnson</p>
-                  <p className="text-xs text-gray-500">Computer Science</p>
+                  <p className="text-sm font-medium text-gray-900">Admin</p>
+                  <p className="text-xs text-gray-500">Head</p>
                 </div>
               )}
               <Image
@@ -71,7 +71,7 @@ const StudentHeader = () => {
                 alt="Profile Logo"
                 width={40}
                 height={40}
-                className="rounded-full shadow-md border-2 border-emerald-300"
+                className="rounded-full shadow-md border-2 border-red-300"
                 priority
                 />
               <ChevronDown size={16} className="text-gray-400" />
@@ -106,4 +106,4 @@ const StudentHeader = () => {
   );
 };
 
-export default StudentHeader;
+export default AdminHeader;
