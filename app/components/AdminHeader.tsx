@@ -4,7 +4,11 @@ import Image from "next/image";
 import {ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-const AdminHeader = () => {
+interface AdminHeaderProps {
+  isCollapsed: boolean;
+}
+
+const AdminHeader = ({ isCollapsed }: AdminHeaderProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
@@ -40,7 +44,7 @@ const AdminHeader = () => {
       h-16 bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200
       flex items-center justify-between px-4 md:px-6 
       fixed top-0 right-0 z-30
-      ${isMobile ? 'left-0' : 'left-64'}
+      ${isMobile ? 'left-0' : isCollapsed ? 'left-16' : 'left-64'}
       transition-all duration-300
     `}>
       {/* Left Section */}
@@ -81,10 +85,10 @@ const AdminHeader = () => {
           {/* Dropdown Menu */}
           {showDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-              <a href="/student/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              <a href="/admin/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 Profile
               </a>
-              <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              <a href="/admin/Help&Support" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 Help & Support
               </a>
               <hr className="my-2 border-gray-200" />

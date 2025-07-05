@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import StudentSidebar from "../../components/StudentSidebar";
 import StudentHeader from "../../components/StudentHeader";
+import api from "@/utils/api";
 import { 
   BookOpen,
   Play,
@@ -57,6 +58,7 @@ interface StudyMaterial {
 
 export default function StudentLectures() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
@@ -70,6 +72,8 @@ export default function StudentLectures() {
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -82,6 +86,118 @@ export default function StudentLectures() {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  useEffect(() => {
+    const fetchStudyMaterials = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Try to fetch from your actual API endpoint
+        const response = await api.get('/api/study-materials', {
+          timeout: 5000, // 5 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        const materials: StudyMaterial[] = response.data.map((item: any) => ({
+          id: item._id || item.id,
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          course: item.course,
+          courseId: item.courseId,
+          instructor: item.instructor,
+          duration: item.duration,
+          pages: item.pages,
+          fileSize: item.fileSize,
+          uploadDate: item.uploadDate,
+          category: item.category,
+          difficulty: item.difficulty,
+          isBookmarked: item.isBookmarked || false,
+          viewCount: item.viewCount || 0,
+          rating: item.rating || 0,
+          url: item.url,
+          thumbnail: item.thumbnail,
+        }));
+        
+        setStudyMaterials(materials);
+      } catch (err: any) {
+        console.error('Error fetching study materials:', err);
+        
+        // If API fails, use fallback data for development
+        // const fallbackMaterials: StudyMaterial[] = [
+        //   {
+        //     id: "1",
+        //     title: "Introduction to Data Structures",
+        //     description: "Comprehensive overview of fundamental data structures including arrays, linked lists, and basic operations.",
+        //     type: "video",
+        //     course: "Data Structures",
+        //     courseId: "ds",
+        //     instructor: "Dr. Smith",
+        //     duration: "45:30",
+        //     fileSize: "18.5 MB",
+        //     uploadDate: "2024-01-15",
+        //     category: "lecture",
+        //     difficulty: "beginner",
+        //     isBookmarked: true,
+        //     viewCount: 234,
+        //     rating: 4.8,
+        //     url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+        //     thumbnail: "https://images.pexels.com/photos/5905709/pexels-photo-5905709.jpeg?auto=compress&cs=tinysrgb&w=400"
+        //   },
+        //   {
+        //     id: "2",
+        //     title: "Array Operations and Complexity",
+        //     description: "Detailed study of array operations, time complexity analysis, and practical implementations.",
+        //     type: "pdf",
+        //     course: "Data Structures",
+        //     courseId: "ds",
+        //     instructor: "Dr. Smith",
+        //     pages: 25,
+        //     fileSize: "2.3 MB",
+        //     uploadDate: "2024-01-12",
+        //     category: "lecture",
+        //     difficulty: "intermediate",
+        //     isBookmarked: false,
+        //     viewCount: 189,
+        //     rating: 4.6,
+        //     url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+        //   },
+        //   {
+        //     id: "3",
+        //     title: "Calculus Fundamentals",
+        //     description: "Basic concepts of differential and integral calculus with practical examples.",
+        //     type: "video",
+        //     course: "Calculus II",
+        //     courseId: "calc",
+        //     instructor: "Dr. Johnson",
+        //     duration: "38:15",
+        //     fileSize: "16.2 MB",
+        //     uploadDate: "2024-01-10",
+        //     category: "tutorial",
+        //     difficulty: "beginner",
+        //     isBookmarked: false,
+        //     viewCount: 156,
+        //     rating: 4.7,
+        //     url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+        //     thumbnail: "https://images.pexels.com/photos/6238050/pexels-photo-6238050.jpeg?auto=compress&cs=tinysrgb&w=400"
+        //   }
+        // ];
+        
+        // setStudyMaterials(fallbackMaterials);
+        
+        if (err.code !== 'ECONNABORTED' && err.response?.status !== 404) {
+          setError('Failed to load study materials from server. Using sample data.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudyMaterials();
   }, []);
 
   const courses = [
@@ -100,157 +216,6 @@ export default function StudentLectures() {
     { id: "tutorial", name: "Tutorials" },
     { id: "assignment", name: "Assignments" },
     { id: "reference", name: "Reference Materials" }
-  ];
-
-  const studyMaterials: StudyMaterial[] = [
-    {
-      id: "1",
-      title: "Introduction to Data Structures",
-      description: "Comprehensive overview of fundamental data structures including arrays, linked lists, and basic operations.",
-      type: "video",
-      course: "Data Structures",
-      courseId: "ds",
-      instructor: "Dr. Smith",
-      duration: "45:30",
-      fileSize: "18.5 MB",
-      uploadDate: "2024-01-15",
-      category: "lecture",
-      difficulty: "beginner",
-      isBookmarked: true,
-      viewCount: 234,
-      rating: 4.8,
-      url: "https://youtu.be/xrj3zzaqODw?si=eCjXxDw5eopRo8GX",
-      thumbnail: "https://youtu.be/xrj3zzaqODw?si=eCjXxDw5eopRo8GX"
-    },
-    {
-      id: "2",
-      title: "Array Operations and Complexity",
-      description: "Detailed study of array operations, time complexity analysis, and practical implementations.",
-      type: "pdf",
-      course: "Data Structures",
-      courseId: "ds",
-      instructor: "Dr. Smith",
-      pages: 25,
-      fileSize: "2.3 MB",
-      uploadDate: "2024-01-12",
-      category: "lecture",
-      difficulty: "intermediate",
-      isBookmarked: false,
-      viewCount: 189,
-      rating: 4.6,
-      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-    },
-    {
-      id: "3",
-      title: "Calculus Fundamentals",
-      description: "Basic concepts of differential and integral calculus with practical examples.",
-      type: "video",
-      course: "Calculus II",
-      courseId: "calc",
-      instructor: "Dr. Johnson",
-      duration: "38:15",
-      fileSize: "16.2 MB",
-      uploadDate: "2024-01-10",
-      category: "tutorial",
-      difficulty: "beginner",
-      isBookmarked: false,
-      viewCount: 156,
-      rating: 4.7,
-      url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
-      thumbnail: "https://images.pexels.com/photos/6238050/pexels-photo-6238050.jpeg?auto=compress&cs=tinysrgb&w=400"
-    },
-    {
-      id: "4",
-      title: "HTML5 and CSS3 Guide",
-      description: "Complete reference guide for modern web development with HTML5 and CSS3.",
-      type: "pdf",
-      course: "Web Development",
-      courseId: "web",
-      instructor: "Prof. Davis",
-      pages: 45,
-      fileSize: "5.8 MB",
-      uploadDate: "2024-01-08",
-      category: "reference",
-      difficulty: "intermediate",
-      isBookmarked: true,
-      viewCount: 298,
-      rating: 4.9,
-      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-    },
-    {
-      id: "5",
-      title: "JavaScript ES6+ Features",
-      description: "Modern JavaScript features and best practices for web development.",
-      type: "video",
-      course: "Web Development",
-      courseId: "web",
-      instructor: "Prof. Davis",
-      duration: "52:45",
-      fileSize: "19.8 MB",
-      uploadDate: "2024-01-05",
-      category: "lecture",
-      difficulty: "advanced",
-      isBookmarked: false,
-      viewCount: 267,
-      rating: 4.8,
-      url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
-      thumbnail: "https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=400"
-    },
-    {
-      id: "6",
-      title: "Database Design Principles",
-      description: "Fundamental principles of database design, normalization, and entity-relationship modeling.",
-      type: "pdf",
-      course: "Database Systems",
-      courseId: "db",
-      instructor: "Dr. Wilson",
-      pages: 38,
-      fileSize: "4.2 MB",
-      uploadDate: "2024-01-03",
-      category: "lecture",
-      difficulty: "intermediate",
-      isBookmarked: true,
-      viewCount: 178,
-      rating: 4.5,
-      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-    },
-    {
-      id: "7",
-      title: "SQL Query Optimization",
-      description: "Advanced techniques for optimizing SQL queries and improving database performance.",
-      type: "video",
-      course: "Database Systems",
-      courseId: "db",
-      instructor: "Dr. Wilson",
-      duration: "41:20",
-      fileSize: "17.3 MB",
-      uploadDate: "2024-01-01",
-      category: "tutorial",
-      difficulty: "advanced",
-      isBookmarked: false,
-      viewCount: 145,
-      rating: 4.7,
-      url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
-      thumbnail: "https://images.pexels.com/photos/5483077/pexels-photo-5483077.jpeg?auto=compress&cs=tinysrgb&w=400"
-    },
-    {
-      id: "8",
-      title: "Algorithm Analysis Assignment",
-      description: "Practice problems and solutions for algorithm complexity analysis.",
-      type: "pdf",
-      course: "Algorithm Design",
-      courseId: "algo",
-      instructor: "Prof. Brown",
-      pages: 15,
-      fileSize: "1.8 MB",
-      uploadDate: "2023-12-28",
-      category: "assignment",
-      difficulty: "intermediate",
-      isBookmarked: false,
-      viewCount: 89,
-      rating: 4.4,
-      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-    }
   ];
 
   const filteredMaterials = studyMaterials.filter(material => {
@@ -313,9 +278,30 @@ export default function StudentLectures() {
     }
   };
 
-  const toggleBookmark = (materialId: string) => {
-    console.log(`Toggling bookmark for material ${materialId}`);
-    // In a real app, this would update the backend
+  const toggleBookmark = async (materialId: string) => {
+    try {
+      // Update local state immediately for better UX
+      setStudyMaterials(prev => 
+        prev.map(material => 
+          material.id === materialId 
+            ? { ...material, isBookmarked: !material.isBookmarked }
+            : material
+        )
+      );
+
+      // Try to update on server
+      await api.patch(`/api/study-materials/${materialId}/bookmark`);
+    } catch (err) {
+      console.error('Error toggling bookmark:', err);
+      // Revert local state if server update fails
+      setStudyMaterials(prev => 
+        prev.map(material => 
+          material.id === materialId 
+            ? { ...material, isBookmarked: !material.isBookmarked }
+            : material
+        )
+      );
+    }
   };
 
   const openViewer = (material: StudyMaterial) => {
@@ -343,7 +329,6 @@ export default function StudentLectures() {
 
   const downloadPDF = (material: StudyMaterial) => {
     console.log(`Downloading PDF: ${material.title}`);
-    // In a real app, this would trigger the download
     const link = document.createElement('a');
     link.href = material.url;
     link.download = `${material.title}.pdf`;
@@ -424,10 +409,10 @@ export default function StudentLectures() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <StudentSidebar />
+      <StudentSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-        <StudentHeader />
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <StudentHeader isCollapsed={isCollapsed} />
         
         <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
           {/* Header Section */}
@@ -438,6 +423,11 @@ export default function StudentLectures() {
                   Study Materials
                 </h1>
                 <p className="text-gray-600">Access video lectures and PDF documents for your courses.</p>
+                {error && (
+                  <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg">
+                    <p className="text-sm text-yellow-800">{error}</p>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1">
@@ -462,284 +452,294 @@ export default function StudentLectures() {
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-            {stats.map((stat, idx) => (
-              <div
-                key={idx}
-                className={`
-                  bg-gradient-to-br ${stat.color} backdrop-blur-sm
-                  p-4 md:p-6 rounded-xl shadow-sm hover:shadow-md 
-                  transition-all duration-300 hover:scale-105 border
-                `}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                    {stat.icon}
+          {/* Loading State */}
+          {loading && studyMaterials.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
+              <span className="ml-2 text-gray-600">Loading study materials...</span>
+            </div>
+          ) : (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                {stats.map((stat, idx) => (
+                  <div
+                    key={idx}
+                    className={`
+                      bg-gradient-to-br ${stat.color} backdrop-blur-sm
+                      p-4 md:p-6 rounded-xl shadow-sm hover:shadow-md 
+                      transition-all duration-300 hover:scale-105 border
+                    `}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        {stat.icon}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
+                      <p className="text-sm font-medium text-gray-700 mb-1">{stat.title}</p>
+                      <p className="text-xs text-gray-500">{stat.change}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Filters */}
+              <div className="bg-white rounded-xl shadow-sm border text-gray-700 border-gray-200 p-4 md:p-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="lg:col-span-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700" size={16} />
+                      <input
+                        type="text"
+                        placeholder="Search materials..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  <select
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="px-3 py-2 border border-gray-400 text-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="video">Videos</option>
+                    <option value="pdf">PDFs</option>
+                  </select>
+
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Materials Grid/List */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500 rounded-lg">
+                      <BookOpen className="text-white" size={20} />
+                    </div>
+                    <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+                      Available Materials ({filteredMaterials.length})
+                    </h2>
                   </div>
                 </div>
-                <div>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                  <p className="text-sm font-medium text-gray-700 mb-1">{stat.title}</p>
-                  <p className="text-xs text-gray-500">{stat.change}</p>
-                </div>
-              </div>
-            ))}
-          </div>
 
-          {/* Filters */}
-          <div className="bg-white rounded-xl shadow-sm border text-gray-700 border-gray-200 p-4 md:p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="lg:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search materials..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              
-              <select
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.name}
-                  </option>
-                ))}
-              </select>
+                <div className="p-4 md:p-6">
+                  {filteredMaterials.length > 0 ? (
+                    <div className={`
+                      ${viewMode === 'grid' 
+                        ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
+                        : 'space-y-4'
+                      }
+                    `}>
+                      {filteredMaterials.map((material) => (
+                        <div
+                          key={material.id}
+                          className={`
+                            bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200
+                            ${viewMode === 'grid' ? 'p-4' : 'p-4 flex items-center gap-4'}
+                          `}
+                        >
+                          {viewMode === 'grid' ? (
+                            <>
+                              {/* Grid View */}
+                              <div className="relative mb-4">
+                                {material.type === 'video' ? (
+                                  <div className="relative">
+                                    <img
+                                      src={material.thumbnail || 'https://images.pexels.com/photos/5905709/pexels-photo-5905709.jpeg?auto=compress&cs=tinysrgb&w=400'}
+                                      alt={material.title}
+                                      className="w-full h-32 object-cover rounded-lg"
+                                    />
+                                    <div className="absolute inset-0 bg-black bg-opacity-30 rounded-lg flex items-center justify-center">
+                                      <div className="p-3 bg-white bg-opacity-90 rounded-full">
+                                        <Play className="text-emerald-600" size={24} />
+                                      </div>
+                                    </div>
+                                    <div className="absolute top-2 right-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
+                                      {material.duration}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-32 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <FileText className="text-red-500" size={48} />
+                                  </div>
+                                )}
+                                <button
+                                  onClick={() => toggleBookmark(material.id)}
+                                  className="absolute top-2 left-2 p-1 bg-white bg-opacity-90 rounded-full hover:bg-opacity-100 transition-all"
+                                >
+                                  {material.isBookmarked ? (
+                                    <BookmarkCheck className="text-emerald-600" size={16} />
+                                  ) : (
+                                    <Bookmark className="text-gray-400" size={16} />
+                                  )}
+                                </button>
+                              </div>
 
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="px-3 py-2 border border-gray-400 text-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="all">All Types</option>
-                <option value="video">Videos</option>
-                <option value="pdf">PDFs</option>
-              </select>
+                              <div className="space-y-3">
+                                <div>
+                                  <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{material.title}</h3>
+                                  <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
+                                </div>
 
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                  {getCategoryIcon(material.category)}
+                                  <span>{material.category}</span>
+                                  <span>•</span>
+                                  <span>{material.course}</span>
+                                </div>
 
-          {/* Materials Grid/List */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500 rounded-lg">
-                  <BookOpen className="text-white" size={20} />
-                </div>
-                <h2 className="text-lg md:text-xl font-semibold text-gray-900">
-                  Available Materials ({filteredMaterials.length})
-                </h2>
-              </div>
-            </div>
-
-            <div className="p-4 md:p-6">
-              {filteredMaterials.length > 0 ? (
-                <div className={`
-                  ${viewMode === 'grid' 
-                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' 
-                    : 'space-y-4'
-                  }
-                `}>
-                  {filteredMaterials.map((material) => (
-                    <div
-                      key={material.id}
-                      className={`
-                        bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200
-                        ${viewMode === 'grid' ? 'p-4' : 'p-4 flex items-center gap-4'}
-                      `}
-                    >
-                      {viewMode === 'grid' ? (
-                        <>
-                          {/* Grid View */}
-                          <div className="relative mb-4">
-                            {material.type === 'video' ? (
-                              <div className="relative">
-                                <img
-                                  src={material.thumbnail || 'https://images.pexels.com/photos/5905709/pexels-photo-5905709.jpeg?auto=compress&cs=tinysrgb&w=400'}
-                                  alt={material.title}
-                                  className="w-full h-32 object-cover rounded-lg"
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-lg flex items-center justify-center">
-                                  <div className="p-3 bg-white bg-opacity-90 rounded-full">
-                                    <Play className="text-emerald-600" size={24} />
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(material.difficulty)}`}>
+                                      {material.difficulty}
+                                    </span>
+                                    <span className="text-xs text-gray-500">{material.fileSize}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                                    <Eye size={12} />
+                                    <span>{material.viewCount}</span>
                                   </div>
                                 </div>
-                                <div className="absolute top-2 right-2 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded">
-                                  {material.duration}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="w-full h-32 bg-red-100 rounded-lg flex items-center justify-center">
-                                <FileText className="text-red-500" size={48} />
-                              </div>
-                            )}
-                            <button
-                              onClick={() => toggleBookmark(material.id)}
-                              className="absolute top-2 left-2 p-1 bg-white bg-opacity-90 rounded-full hover:bg-opacity-100 transition-all"
-                            >
-                              {material.isBookmarked ? (
-                                <BookmarkCheck className="text-emerald-600" size={16} />
-                              ) : (
-                                <Bookmark className="text-gray-400" size={16} />
-                              )}
-                            </button>
-                          </div>
 
-                          <div className="space-y-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{material.title}</h3>
-                              <p className="text-sm text-gray-600 line-clamp-2">{material.description}</p>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              {getCategoryIcon(material.category)}
-                              <span>{material.category}</span>
-                              <span>•</span>
-                              <span>{material.course}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(material.difficulty)}`}>
-                                  {material.difficulty}
-                                </span>
-                                <span className="text-xs text-gray-500">{material.fileSize}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <Eye size={12} />
-                                <span>{material.viewCount}</span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => openViewer(material)}
-                                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm"
-                              >
-                                <Eye size={14} />
-                                View
-                              </button>
-                              {material.type === 'pdf' && (
-                                <button
-                                  onClick={() => downloadPDF(material)}
-                                  className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                  <Download size={14} />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          {/* List View */}
-                          <div className="flex-shrink-0">
-                            {material.type === 'video' ? (
-                              <div className="relative w-24 h-16">
-                                <img
-                                  src={material.thumbnail || 'https://images.pexels.com/photos/5905709/pexels-photo-5905709.jpeg?auto=compress&cs=tinysrgb&w=400'}
-                                  alt={material.title}
-                                  className="w-full h-full object-cover rounded"
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-30 rounded flex items-center justify-center">
-                                  <Play className="text-white" size={16} />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="w-24 h-16 bg-red-100 rounded flex items-center justify-center">
-                                <FileText className="text-red-500" size={24} />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-semibold text-gray-900 truncate">{material.title}</h3>
-                              <button
-                                onClick={() => toggleBookmark(material.id)}
-                                className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
-                              >
-                                {material.isBookmarked ? (
-                                  <BookmarkCheck className="text-emerald-600" size={16} />
-                                ) : (
-                                  <Bookmark className="text-gray-400" size={16} />
-                                )}
-                              </button>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-1">{material.description}</p>
-                            <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
-                              <span className="flex items-center gap-1">
-                                {getCategoryIcon(material.category)}
-                                {material.category}
-                              </span>
-                              <span>{material.course}</span>
-                              <span>{material.instructor}</span>
-                              <span>{material.type === 'video' ? material.duration : `${material.pages} pages`}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(material.difficulty)}`}>
-                                  {material.difficulty}
-                                </span>
-                                <span className="text-xs text-gray-500">{material.fileSize}</span>
-                                <span className="flex items-center gap-1 text-xs text-gray-500">
-                                  <Eye size={12} />
-                                  {material.viewCount}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => openViewer(material)}
-                                  className="flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded text-sm hover:bg-emerald-700 transition-colors"
-                                >
-                                  <Eye size={12} />
-                                  View
-                                </button>
-                                {material.type === 'pdf' && (
+                                <div className="flex items-center gap-2">
                                   <button
-                                    onClick={() => downloadPDF(material)}
-                                    className="p-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                    onClick={() => openViewer(material)}
+                                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm"
                                   >
-                                    <Download size={12} />
+                                    <Eye size={14} />
+                                    View
                                   </button>
+                                  {material.type === 'pdf' && (
+                                    <button
+                                      onClick={() => downloadPDF(material)}
+                                      className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                      <Download size={14} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {/* List View */}
+                              <div className="flex-shrink-0">
+                                {material.type === 'video' ? (
+                                  <div className="relative w-24 h-16">
+                                    <img
+                                      src={material.thumbnail || 'https://images.pexels.com/photos/5905709/pexels-photo-5905709.jpeg?auto=compress&cs=tinysrgb&w=400'}
+                                      alt={material.title}
+                                      className="w-full h-full object-cover rounded"
+                                    />
+                                    <div className="absolute inset-0 bg-black bg-opacity-30 rounded flex items-center justify-center">
+                                      <Play className="text-white" size={16} />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-24 h-16 bg-red-100 rounded flex items-center justify-center">
+                                    <FileText className="text-red-500" size={24} />
+                                  </div>
                                 )}
                               </div>
-                            </div>
-                          </div>
-                        </>
-                      )}
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-2">
+                                  <h3 className="font-semibold text-gray-900 truncate">{material.title}</h3>
+                                  <button
+                                    onClick={() => toggleBookmark(material.id)}
+                                    className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
+                                  >
+                                    {material.isBookmarked ? (
+                                      <BookmarkCheck className="text-emerald-600" size={16} />
+                                    ) : (
+                                      <Bookmark className="text-gray-400" size={16} />
+                                    )}
+                                  </button>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-2 line-clamp-1">{material.description}</p>
+                                <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
+                                  <span className="flex items-center gap-1">
+                                    {getCategoryIcon(material.category)}
+                                    {material.category}
+                                  </span>
+                                  <span>{material.course}</span>
+                                  <span>{material.instructor}</span>
+                                  <span>{material.type === 'video' ? material.duration : `${material.pages} pages`}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(material.difficulty)}`}>
+                                      {material.difficulty}
+                                    </span>
+                                    <span className="text-xs text-gray-500">{material.fileSize}</span>
+                                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                                      <Eye size={12} />
+                                      {material.viewCount}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => openViewer(material)}
+                                      className="flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded text-sm hover:bg-emerald-700 transition-colors"
+                                    >
+                                      <Eye size={12} />
+                                      View
+                                    </button>
+                                    {material.type === 'pdf' && (
+                                      <button
+                                        onClick={() => downloadPDF(material)}
+                                        className="p-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                      >
+                                        <Download size={12} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="text-center py-12">
+                      <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No materials found</h3>
+                      <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No materials found</h3>
-                  <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
-                </div>
-              )}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
         </main>
       </div>
 

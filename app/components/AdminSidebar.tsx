@@ -1,10 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Home, Users, FileText, BarChart3, Settings, LogOut, Menu, X, Monitor, GraduationCap, Calendar, Bell } from "lucide-react";
+import { Home, Users, FileText, BarChart3, Settings, LogOut, Menu, X, Monitor, GraduationCap, ChevronLeft, ChevronRight, Calendar, Bell } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const AdminSidebar = () => {
+interface AdminSidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+}
+
+const AdminSidebar = ({ isCollapsed, setIsCollapsed }: AdminSidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
@@ -22,16 +27,15 @@ const AdminSidebar = () => {
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, href: "/admin" },
     { name: "Exam Control", icon: <Monitor size={20} />, href: "/admin/exams" },
-    { name: "Students", icon: <Users size={20} />, href: "/faculty/students" },
+    { name: "Manage Users", icon: <Users size={20} />, href: "/admin/users" },
+    { name: "Study Matterial", icon: <FileText size={20} />, href: "/admin/StudyMatterial" },
     { name: "Grades", icon: <GraduationCap size={20} />, href: "/faculty/grades" },
-    { name: "Analytics", icon: <BarChart3 size={20} />, href: "/faculty/analytics" },
     { name: "Schedule", icon: <Calendar size={20} />, href: "/admin/schedule" },
-    { name: "Notifications", icon: <Bell size={20} />, href: "/faculty/notifications" },
-    { name: "Settings", icon: <Settings size={20} />, href: "/faculty/settings" },
     { name: "Logout", icon: <LogOut size={20} />, href: "/login", isDanger: true },
   ];
 
   const toggleMobile = () => setMobileOpen(!mobileOpen);
+   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
   const isActive = (href: string) => {
     return pathname === href;
@@ -62,14 +66,27 @@ const AdminSidebar = () => {
         h-screen bg-gradient-to-b from-red-900 to-red-950 text-white shadow-2xl
         ${isMobile 
           ? `fixed z-50 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} w-64` 
-          : 'fixed w-64'
+          : `fixed ${isCollapsed ? 'w-16' : 'w-64'}`
         }
         transition-all duration-300 ease-in-out
       `}>
         <div className="flex items-center justify-between px-4 py-6 border-b border-red-600">
+          {(!isCollapsed || isMobile) && (
           <h1 className="text-xl font-bold bg-gradient-to-r from-red-400 to-red-400 bg-clip-text text-transparent">
             Admin Portal 
           </h1>
+        )}
+
+          {/* Desktop Toggle Button */}
+          {!isMobile && (
+            <button
+              onClick={toggleSidebar}
+              className="p-1.5 hover:bg-red-700 rounded-lg transition-colors"
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
+          )}
         </div>
 
         <nav className="mt-6 px-2">
@@ -83,6 +100,7 @@ const AdminSidebar = () => {
                 }
                 ${item.isDanger ? 'hover:bg-red-600' : ''}
                 group relative
+                ${isCollapsed && !isMobile ? 'justify-center' : ''}
               `}>
                 <div className={`
                   ${item.isDanger 
@@ -92,10 +110,12 @@ const AdminSidebar = () => {
                       : 'text-red-400'
                   } 
                   group-hover:text-white transition-colors
+                  ${isCollapsed && !isMobile ? 'mx-auto' : ''}
                 `}>
                   {item.icon}
                 </div>
                 
+                {(!isCollapsed || isMobile) && (
                 <span className={`
                   ml-3 font-medium 
                   ${item.isDanger 
@@ -107,6 +127,14 @@ const AdminSidebar = () => {
                 `}>
                   {item.name}
                 </span>
+                )}
+
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && !isMobile && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.name}
+                  </div>
+                )}
                 
                 {/* Active indicator dot */}
                 {isActive(item.href) && !item.isDanger && (
@@ -118,11 +146,13 @@ const AdminSidebar = () => {
         </nav>
 
         {/* Bottom decoration */}
+        {(!isCollapsed || isMobile) && (
         <div className="absolute bottom-4 left-4 right-4">
           <div className="text-xs text-red-400 text-center border-t border-red-600 pt-4">
             Admin Dashboard v2.0
           </div>
         </div>
+        )}
       </div>
     </>
   );

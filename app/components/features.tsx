@@ -73,26 +73,6 @@ export default function Features() {
             </div>
           ))}
         </div>
-
-        {/* Call to Action */}
-        <div className="text-center mt-16">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 md:p-12 text-white">
-            <h3 className="text-2xl md:text-3xl font-bold mb-4">
-              Ready to Start Your Learning Journey?
-            </h3>
-            <p className="text-blue-100 mb-8 text-lg">
-              Join thousands of learners who have transformed their careers with our platform
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105">
-                Browse Courses
-              </button>
-              <button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 rounded-lg border-2 border-orange-400 transition-all duration-200">
-                Free Trial
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

@@ -48,6 +48,7 @@ interface ExamResult {
 
 export default function StudentGrades() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -277,10 +278,10 @@ export default function StudentGrades() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <StudentSidebar />
+      <StudentSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-        <StudentHeader />
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <StudentHeader isCollapsed={isCollapsed} />
         
         <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
           {/* Header Section */}

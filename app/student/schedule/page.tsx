@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import StudentSidebar from "../../components/StudentSidebar";
 import StudentHeader from "../../components/StudentHeader";
+import api from "@/utils/api";
 
 interface Class {
   day: string;
@@ -11,8 +12,11 @@ interface Class {
   faculty: string;
 }
 
+const weekOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
 const ClassSchedulePage = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [classes, setClasses] = useState<Class[]>([]);
 
   useEffect(() => {
@@ -26,23 +30,24 @@ const ClassSchedulePage = () => {
   }, []);
 
   useEffect(() => {
-    // Dummy data for class schedule
-    const dummyClasses: Class[] = [
-      { day: "Monday", subject: "Communication Skills", startTime: "10:45 AM", endTime: "12:15 PM", faculty: "Dr. Verma" },
-      { day: "Monday", subject: "Web Technology", startTime: "09:00 AM", endTime: "10:30 AM", faculty: "Prof. Kapoor" },
-      { day: "Tuesday", subject: "Data Structures", startTime: "10:45 AM", endTime: "12:15 PM", faculty: "Dr. Iyer" },
-      { day: "Tuesday", subject: "Communication Skills", startTime: "10:45 AM", endTime: "12:15 PM", faculty: "Dr. Verma" },
-      { day: "Wednesday", subject: "Web Technology", startTime: "09:00 AM", endTime: "10:30 AM", faculty: "Prof. Kapoor" },
-      { day: "Wednesday", subject: "Data Structures", startTime: "10:45 AM", endTime: "12:15 PM", faculty: "Dr. Iyer" },
-      { day: "Thursday", subject: "Operating Systems", startTime: "09:00 AM", endTime: "10:30 AM", faculty: "Prof. Das" },
-      { day: "Thursday", subject: "Database Management Systems", startTime: "10:45 AM", endTime: "12:15 PM", faculty: "Dr. Nair" },
-      { day: "Friday", subject: "Python Programming", startTime: "09:00 AM", endTime: "10:30 AM", faculty: "Prof. Bajpai" },
-      { day: "Friday", subject: "Software Engineering", startTime: "10:45 AM", endTime: "12:15 PM", faculty: "Dr. Joshi" },
-      { day: "Saturday", subject: "Web Technology", startTime: "09:00 AM", endTime: "10:30 AM", faculty: "Prof. Kapoor" },
-      { day: "Saturday", subject: "Data Structures", startTime: "10:45 AM", endTime: "12:15 PM", faculty: "Dr. Iyer" },
-    ];
+    const fetchClasses = async () => {
+      try {
+        const response = await api.get("/schedules");
+        const data = response.data;
+        const formattedClasses: Class[] = data.map((item: any) => ({
+          day: item.days.join(", "),
+          subject: item.subject,
+          startTime: item.startTime,
+          endTime: item.endTime,
+          faculty: item.faculty,
+        }));
+        setClasses(formattedClasses);
+      } catch (error) {
+        console.error("Failed to fetch classes:", error);
+      }
+    };
 
-    setClasses(dummyClasses);
+    fetchClasses();
   }, []);
 
   const getTodayDay = () => {
@@ -51,14 +56,21 @@ const ClassSchedulePage = () => {
   };
 
   const isTodayClass = (classItem: Class) => {
-    return classItem.day === getTodayDay();
+    return classItem.day.includes(getTodayDay());
   };
+
+  const sortedClasses = classes.sort((a, b) => {
+    const dayAIndex = weekOrder.indexOf(a.day.split(", ")[0]); // Consider only the first day for sorting
+    const dayBIndex = weekOrder.indexOf(b.day.split(", ")[0]); // Consider only the first day for sorting
+    return dayAIndex - dayBIndex;
+  });
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <StudentSidebar />
-      <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-        <StudentHeader />
+      <StudentSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <StudentHeader isCollapsed={isCollapsed} />
         
         <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
           <div className="mb-8">
@@ -86,7 +98,7 @@ const ClassSchedulePage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {classes.map((classItem, index) => (
+                  {sortedClasses.map((classItem, index) => (
                     <tr 
                       key={index} 
                       className={`

@@ -12,6 +12,7 @@ import {
 
 export default function AdminDashboard() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -77,10 +78,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
+      <AdminSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-        <AdminHeader />
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <AdminHeader isCollapsed={isCollapsed} />
         
         <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
           {/* Welcome Section */}
@@ -136,7 +137,7 @@ export default function AdminDashboard() {
                       <h3 className="font-semibold text-gray-900 mb-1">{document.title}</h3>
                       <p className="text-xs text-gray-500 mt-1">{document.date}</p>
                     </div>
-                    <span className="flex items-center gap-1 text-sm">
+                    <span className="flex text-gray-600 items-center gap-1 text-sm">
                       {document.icon}
                       {document.status}
                     </span>

@@ -1,10 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import {ChevronDown } from "lucide-react";
+import { ChevronDown, Bell, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-const StudentHeader = () => {
+interface StudentHeaderProps {
+  isCollapsed: boolean;
+}
+
+const StudentHeader = ({ isCollapsed }: StudentHeaderProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
@@ -24,13 +28,15 @@ const StudentHeader = () => {
     const currentPage = pathSegments[pathSegments.length - 1];
     
     switch(currentPage) {
-      case 'dashboard': return 'Dashboard';
+      case 'student': return 'Dashboard';
       case 'schedule': return 'Schedule';
       case 'attendance': return 'Attendance';
       case 'documents': return 'Documents';
       case 'progress': return 'Progress Report';
       case 'grades': return 'Grades';
-
+      case 'exam': return 'Exam';
+      case 'studymatterials': return 'Study Materials';
+      case 'help-support': return 'Help & Support';
       default: return 'Student Portal';
     }
   };
@@ -40,7 +46,7 @@ const StudentHeader = () => {
       h-16 bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200
       flex items-center justify-between px-4 md:px-6 
       fixed top-0 right-0 z-30
-      ${isMobile ? 'left-0' : 'left-64'}
+      ${isMobile ? 'left-0' : isCollapsed ? 'left-16' : 'left-64'}
       transition-all duration-300
     `}>
       {/* Left Section */}
@@ -52,6 +58,9 @@ const StudentHeader = () => {
           {isMobile ? getPageTitle() : `${getPageTitle()}`}
         </h2>
       </div>
+
+      {/* Right Section */}
+      <div className="flex">
 
         {/* User Profile */}
         <div className="relative">
@@ -73,7 +82,10 @@ const StudentHeader = () => {
                 height={40}
                 className="rounded-full shadow-md border-2 border-emerald-300"
                 priority
-                />
+                onError={(e) => {
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=Alex+Johnson&background=10b981&color=fff&size=40`;
+                }}
+              />
               <ChevronDown size={16} className="text-gray-400" />
             </div>
           </button>
@@ -84,7 +96,7 @@ const StudentHeader = () => {
               <a href="/student/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 Profile
               </a>
-              <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              <a href="/student/Help&Support" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                 Help & Support
               </a>
               <hr className="my-2 border-gray-200" />
@@ -94,6 +106,7 @@ const StudentHeader = () => {
             </div>
           )}
         </div>
+      </div>
 
       {/* Close dropdown when clicking outside */}
       {showDropdown && (

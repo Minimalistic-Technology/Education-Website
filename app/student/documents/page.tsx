@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import StudentSidebar from "../../components/StudentSidebar";
 import StudentHeader from "../../components/StudentHeader";
-import { 
+import api from "@/utils/api";
+import {
   Upload,
   FileText,
   Image,
@@ -14,30 +15,23 @@ import {
   Clock,
   Plus,
   Search,
-  Filter,
-  MoreVertical,
-  User,
-  CreditCard,
-  GraduationCap,
-  FileImage,
-  Award,
-  Shield,
-  Calendar,
-  FileCheck,
   X,
   Camera,
-  Folder,
-  Star,
-  Edit3
+  CreditCard,
+  Shield,
+  Award,
+  Edit3,
+  FileCheck,
+  Folder
 } from "lucide-react";
 
 interface Document {
   id: string;
   name: string;
-  type: 'id-card' | 'aadhar' | 'photo' | 'result' | 'signature' | 'certificate' | 'other';
+  type: string;
   fileName: string;
   fileSize: string;
-  fileType: 'jpg' | 'png' | 'pdf';
+  fileType: string;
   uploadDate: string;
   status: 'verified' | 'pending' | 'rejected';
   url?: string;
@@ -46,12 +40,27 @@ interface Document {
 
 export default function StudentDocuments() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadCategory, setUploadCategory] = useState("");
+  const [uploadDescription, setUploadDescription] = useState("");
+
+  const documentCategories = [
+    { id: "all", name: "All Documents", icon: <Folder size={20} />, count: 0 },
+    { id: "id-card", name: "ID Cards", icon: <CreditCard size={20} />, count: 0 },
+    { id: "aadhar", name: "Aadhar Card", icon: <Shield size={20} />, count: 0 },
+    { id: "photo", name: "Photos", icon: <Camera size={20} />, count: 0 },
+    { id: "result", name: "Results", icon: <Award size={20} />, count: 0 },
+    { id: "signature", name: "Signatures", icon: <Edit3 size={20} />, count: 0 },
+    { id: "certificate", name: "Certificates", icon: <FileCheck size={20} />, count: 0 }
+  ];
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -59,179 +68,85 @@ export default function StudentDocuments() {
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  const documentCategories = [
-    { id: "all", name: "All Documents", icon: <Folder size={20} />, count: 12 },
-    { id: "id-card", name: "ID Cards", icon: <CreditCard size={20} />, count: 2 },
-    { id: "aadhar", name: "Aadhar Card", icon: <Shield size={20} />, count: 1 },
-    { id: "photo", name: "Photos", icon: <Camera size={20} />, count: 3 },
-    { id: "result", name: "Results", icon: <Award size={20} />, count: 4 },
-    { id: "signature", name: "Signatures", icon: <Edit3 size={20} />, count: 1 },
-    { id: "certificate", name: "Certificates", icon: <FileCheck size={20} />, count: 1 }
-  ];
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
-  const documents: Document[] = [
-    {
-      id: "1",
-      name: "Student ID Card",
-      type: "id-card",
-      fileName: "student_id_2024.jpg",
-      fileSize: "2.3 MB",
-      fileType: "jpg",
-      uploadDate: "2024-01-15",
-      status: "verified",
-      description: "Official student identification card"
-    },
-    {
-      id: "2",
-      name: "Aadhar Card",
-      type: "aadhar",
-      fileName: "aadhar_card.pdf",
-      fileSize: "1.8 MB",
-      fileType: "pdf",
-      uploadDate: "2024-01-10",
-      status: "verified",
-      description: "Government issued identity proof"
-    },
-    {
-      id: "3",
-      name: "Passport Photo",
-      type: "photo",
-      fileName: "passport_photo.jpg",
-      fileSize: "856 KB",
-      fileType: "jpg",
-      uploadDate: "2024-01-12",
-      status: "verified",
-      description: "Official passport size photograph"
-    },
-    {
-      id: "4",
-      name: "Semester 1 Result",
-      type: "result",
-      fileName: "sem1_result.pdf",
-      fileSize: "1.2 MB",
-      fileType: "pdf",
-      uploadDate: "2024-01-08",
-      status: "verified",
-      description: "First semester examination results"
-    },
-    {
-      id: "5",
-      name: "Digital Signature",
-      type: "signature",
-      fileName: "signature.png",
-      fileSize: "245 KB",
-      fileType: "png",
-      uploadDate: "2024-01-14",
-      status: "pending",
-      description: "Digital signature for official documents"
-    },
-    {
-      id: "6",
-      name: "Birth Certificate",
-      type: "certificate",
-      fileName: "birth_certificate.pdf",
-      fileSize: "1.5 MB",
-      fileType: "pdf",
-      uploadDate: "2024-01-11",
-      status: "verified",
-      description: "Official birth certificate"
-    },
-    {
-      id: "7",
-      name: "Semester 2 Result",
-      type: "result",
-      fileName: "sem2_result.pdf",
-      fileSize: "1.1 MB",
-      fileType: "pdf",
-      uploadDate: "2024-01-09",
-      status: "verified",
-      description: "Second semester examination results"
-    },
-    {
-      id: "8",
-      name: "Profile Picture",
-      type: "photo",
-      fileName: "profile_pic.jpg",
-      fileSize: "1.8 MB",
-      fileType: "jpg",
-      uploadDate: "2024-01-13",
-      status: "verified",
-      description: "Current profile photograph"
-    }
-  ];
-
-  const stats = [
-    {
-      title: "Total Documents",
-      value: "12",
-      icon: <FileText className="text-blue-500" size={24} />,
-      change: "3 added this month",
-      color: "from-blue-500/10 to-blue-600/10 border-blue-200"
-    },
-    {
-      title: "Verified",
-      value: "10",
-      icon: <CheckCircle className="text-green-500" size={24} />,
-      change: "83% verification rate",
-      color: "from-green-500/10 to-green-600/10 border-green-200"
-    },
-    {
-      title: "Pending Review",
-      value: "2",
-      icon: <Clock className="text-yellow-500" size={24} />,
-      change: "Under verification",
-      color: "from-yellow-500/10 to-yellow-600/10 border-yellow-200"
-    },
-    {
-      title: "Storage Used",
-      value: "15.2 MB",
-      icon: <Upload className="text-purple-500" size={24} />,
-      change: "of 100 MB limit",
-      color: "from-purple-500/10 to-purple-600/10 border-purple-200"
-    }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'verified': return 'text-green-600 bg-green-50 border-green-200';
-      case 'pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'rejected': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/documents");
+      const data = res.data.map((doc: any) => ({
+        id: doc._id,
+        name: doc.documentType,
+        type: doc.documentType.toLowerCase().replace(/\s+/g, '-'),
+        fileName: doc.fileUrl.split('/').pop(),
+        fileSize: "N/A",
+        fileType: doc.fileFormat,
+        uploadDate: doc.createdAt,
+        status: "verified",
+        url: doc.fileUrl,
+        description: doc.description || ""
+      }));
+      setDocuments(data);
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch(status) {
-      case 'verified': return <CheckCircle size={14} className="text-green-600" />;
-      case 'pending': return <Clock size={14} className="text-yellow-600" />;
-      case 'rejected': return <AlertCircle size={14} className="text-red-600" />;
-      default: return <Clock size={14} className="text-gray-600" />;
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    const fileFormat = file.type.split("/")[1] || "jpg";
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('documentType', uploadCategory || 'Photo');
+      formData.append('description', uploadDescription);
+
+      await api.post("/document", {
+        studentId: "student123", // replace with actual student ID
+        documentType: uploadCategory || "Photo",
+        fileUrl: `/uploads/${file.name}`,
+        fileFormat,
+        description: uploadDescription
+      });
+
+      setShowUploadModal(false);
+      setUploadCategory("");
+      setUploadDescription("");
+      fetchDocuments(); // Refresh the documents list
+    } catch (err) {
+      console.error("Error uploading:", err);
     }
   };
 
-  const getFileIcon = (fileType: string) => {
-    switch(fileType) {
-      case 'pdf': return <FileText className="text-red-500" size={20} />;
-      case 'jpg':
-      case 'png': return <Image className="text-blue-500" size={20} />;
-      default: return <FileText className="text-gray-500" size={20} />;
+  const deleteDocument = async (docId: string) => {
+    try {
+      await api.delete(`/document/${docId}`);
+      setDocuments(prev => prev.filter(doc => doc.id !== docId));
+    } catch (err) {
+      console.error("Error deleting:", err);
     }
   };
 
-  const getCategoryIcon = (type: string) => {
-    switch(type) {
-      case 'id-card': return <CreditCard className="text-blue-500" size={16} />;
-      case 'aadhar': return <Shield className="text-green-500" size={16} />;
-      case 'photo': return <Camera className="text-purple-500" size={16} />;
-      case 'result': return <Award className="text-yellow-500" size={16} />;
-      case 'signature': return <Edit3 className="text-indigo-500" size={16} />;
-      case 'certificate': return <FileCheck className="text-emerald-500" size={16} />;
-      default: return <FileText className="text-gray-500" size={16} />;
+  const downloadDocument = (doc: Document) => {
+    if (doc.url) {
+      window.open(doc.url, "_blank");
     }
+  };
+
+  const previewDocument = (doc: Document) => {
+    setSelectedDocument(doc);
+    setShowPreview(true);
   };
 
   const filteredDocuments = documents.filter(doc => {
@@ -240,16 +155,6 @@ export default function StudentDocuments() {
                          doc.fileName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files) return;
-    
-    Array.from(files).forEach(file => {
-      console.log(`Uploading file: ${file.name}, Size: ${file.size}, Type: ${file.type}`);
-      // Here you would implement the actual file upload logic
-    });
-    setShowUploadModal(false);
-  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -268,27 +173,93 @@ export default function StudentDocuments() {
     handleFileUpload(files);
   };
 
-  const deleteDocument = (docId: string) => {
-    console.log(`Deleting document: ${docId}`);
-    // Implement delete logic
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case "pdf": return <FileText className="text-red-500" size={20} />;
+      case "jpg":
+      case "png": return <Image className="text-blue-500" size={20} />;
+      default: return <FileText className="text-gray-500" size={20} />;
+    }
   };
 
-  const downloadDocument = (doc: Document) => {
-    console.log(`Downloading document: ${doc.fileName}`);
-    // Implement download logic
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "verified": return "text-green-600 bg-green-50 border-green-200";
+      case "pending": return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "rejected": return "text-red-600 bg-red-50 border-red-200";
+      default: return "text-gray-600 bg-gray-50 border-gray-200";
+    }
   };
 
-  const previewDocument = (doc: Document) => {
-    setSelectedDocument(doc);
-    setShowPreview(true);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "verified": return <CheckCircle size={14} className="text-green-600" />;
+      case "pending": return <Clock size={14} className="text-yellow-600" />;
+      case "rejected": return <AlertCircle size={14} className="text-red-600" />;
+      default: return <Clock size={14} className="text-gray-600" />;
+    }
   };
+
+  const getCategoryIcon = (type: string) => {
+    switch (type) {
+      case "id-card": return <CreditCard className="text-blue-500" size={16} />;
+      case "aadhar": return <Shield className="text-green-500" size={16} />;
+      case "photo": return <Camera className="text-purple-500" size={16} />;
+      case "result": return <Award className="text-yellow-500" size={16} />;
+      case "signature": return <Edit3 className="text-indigo-500" size={16} />;
+      case "certificate": return <FileCheck className="text-emerald-500" size={16} />;
+      default: return <FileText className="text-gray-500" size={16} />;
+    }
+  };
+
+  // Calculate category counts
+  const categoryCounts = documentCategories.map(category => ({
+    ...category,
+    count: category.id === "all" ? documents.length : documents.filter(doc => doc.type === category.id).length
+  }));
+
+  // Calculate stats
+  const verifiedCount = documents.filter(doc => doc.status === "verified").length;
+  const pendingCount = documents.filter(doc => doc.status === "pending").length;
+  const totalSize = documents.reduce((sum, doc) => sum + (parseFloat(doc.fileSize) || 0), 0);
+
+  const stats = [
+    {
+      title: "Total Documents",
+      value: documents.length.toString(),
+      icon: <FileText className="text-blue-500" size={24} />,
+      change: "Documents uploaded",
+      color: "from-blue-500/10 to-blue-600/10 border-blue-200"
+    },
+    {
+      title: "Verified",
+      value: verifiedCount.toString(),
+      icon: <CheckCircle className="text-green-500" size={24} />,
+      change: `${documents.length > 0 ? Math.round((verifiedCount / documents.length) * 100) : 0}% verification rate`,
+      color: "from-green-500/10 to-green-600/10 border-green-200"
+    },
+    {
+      title: "Pending Review",
+      value: pendingCount.toString(),
+      icon: <Clock className="text-yellow-500" size={24} />,
+      change: "Under verification",
+      color: "from-yellow-500/10 to-yellow-600/10 border-yellow-200"
+    },
+    {
+      title: "Storage Used",
+      value: totalSize > 0 ? `${totalSize.toFixed(1)} MB` : "0 MB",
+      icon: <Upload className="text-purple-500" size={24} />,
+      change: "of 100 MB limit",
+      color: "from-purple-500/10 to-purple-600/10 border-purple-200"
+    }
+  ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <StudentSidebar />
+      <StudentSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-        <StudentHeader />
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <StudentHeader isCollapsed={isCollapsed} />
         
         <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
           {/* Header Section */}
@@ -344,7 +315,7 @@ export default function StudentDocuments() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Categories</h2>
                 <div className="space-y-2">
-                  {documentCategories.map((category) => (
+                  {categoryCounts.map((category) => (
                     <button
                       key={category.id}
                       onClick={() => setSelectedCategory(category.id)}
@@ -380,12 +351,15 @@ export default function StudentDocuments() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Used</span>
-                    <span className="text-gray-400 font-medium">15.2 MB / 100 MB</span>
+                    <span className="text-gray-400 font-medium">{totalSize.toFixed(1)} MB / 100 MB</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '15.2%' }}></div>
+                    <div 
+                      className="bg-emerald-500 h-2 rounded-full" 
+                      style={{ width: `${Math.min((totalSize / 100) * 100, 100)}%` }}
+                    ></div>
                   </div>
-                  <p className="text-xs text-gray-500">84.8 MB remaining</p>
+                  <p className="text-xs text-gray-500">{(100 - totalSize).toFixed(1)} MB remaining</p>
                 </div>
               </div>
             </div>
@@ -409,7 +383,7 @@ export default function StudentDocuments() {
                           placeholder="Search documents..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 text-gray-500 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                          className="pl-10 pr-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                         />
                       </div>
                     </div>
@@ -417,7 +391,12 @@ export default function StudentDocuments() {
                 </div>
 
                 <div className="p-4 md:p-6">
-                  {filteredDocuments.length > 0 ? (
+                  {loading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                      <p className="text-gray-500">Loading documents...</p>
+                    </div>
+                  ) : filteredDocuments.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredDocuments.map((doc) => (
                         <div
@@ -501,7 +480,7 @@ export default function StudentDocuments() {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-200 bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -553,15 +532,19 @@ export default function StudentDocuments() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Document Category
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <select 
+                  value={uploadCategory}
+                  onChange={(e) => setUploadCategory(e.target.value)}
+                  className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
                   <option value="">Select category</option>
-                  <option value="id-card">ID Card</option>
-                  <option value="aadhar">Aadhar Card</option>
-                  <option value="photo">Photo</option>
-                  <option value="result">Result</option>
-                  <option value="signature">Signature</option>
-                  <option value="certificate">Certificate</option>
-                  <option value="other">Other</option>
+                  <option value="ID Card">ID Card</option>
+                  <option value="Aadhar Card">Aadhar Card</option>
+                  <option value="Photo">Photo</option>
+                  <option value="Result">Result</option>
+                  <option value="Signature">Signature</option>
+                  <option value="Certificate">Certificate</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
@@ -571,7 +554,9 @@ export default function StudentDocuments() {
                 </label>
                 <textarea
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  value={uploadDescription}
+                  onChange={(e) => setUploadDescription(e.target.value)}
+                  className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   placeholder="Add a description for this document..."
                 />
               </div>
@@ -584,7 +569,15 @@ export default function StudentDocuments() {
               >
                 Cancel
               </button>
-              <button className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+              <button 
+                onClick={() => {
+                  const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+                  if (fileInput?.files) {
+                    handleFileUpload(fileInput.files);
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
                 Upload
               </button>
             </div>
@@ -594,7 +587,7 @@ export default function StudentDocuments() {
 
       {/* Preview Modal */}
       {showPreview && selectedDocument && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-200 bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -618,15 +611,15 @@ export default function StudentDocuments() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">File Name:</span>
-                  <span className="text-sm font-medium">{selectedDocument.fileName}</span>
+                  <span className="text-sm text-gray-600 font-medium">{selectedDocument.fileName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">File Size:</span>
-                  <span className="text-sm font-medium">{selectedDocument.fileSize}</span>
+                  <span className="text-sm text-gray-600 font-medium">{selectedDocument.fileSize}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Upload Date:</span>
-                  <span className="text-sm font-medium">
+                  <span className="text-sm text-gray-600 font-medium">
                     {new Date(selectedDocument.uploadDate).toLocaleDateString()}
                   </span>
                 </div>
@@ -658,7 +651,10 @@ export default function StudentDocuments() {
                 Download
               </button>
               <button
-                onClick={() => deleteDocument(selectedDocument.id)}
+                onClick={() => {
+                  deleteDocument(selectedDocument.id);
+                  setShowPreview(false);
+                }}
                 className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
               >
                 Delete

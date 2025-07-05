@@ -21,8 +21,8 @@ const facultySidebar = () => {
 
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, href: "/faculty" },
-    { name: "Courses", icon: <Calendar size={20} />, href: "/student/schedule" },
-    { name: "Schedule", icon: <Calendar size={20} />, href: "/student/schedule" },
+    { name: "Courses", icon: <Calendar size={20} />, href: "/faculty/schedule" },
+    { name: "Schedule", icon: <Calendar size={20} />, href: "/faculty/schedule" },
     { name: "Logout", icon: <LogOut size={20} />, href: "/login", isDanger: true },
   ];
 

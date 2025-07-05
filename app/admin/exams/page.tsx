@@ -45,6 +45,7 @@ interface ExamControl {
 
 export default function ManageExam() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedExam, setSelectedExam] = useState<ExamControl | null>(null);
   const [showExamModal, setShowExamModal] = useState(false);
 
@@ -185,10 +186,10 @@ export default function ManageExam() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
+      <AdminSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-        <AdminHeader />
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <AdminHeader isCollapsed={isCollapsed} />
         
         <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
           {/* Header Section */}

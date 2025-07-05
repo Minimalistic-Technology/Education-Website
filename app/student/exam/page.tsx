@@ -61,6 +61,7 @@ interface Exam {
 
 export default function StudentExam() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [currentExam, setCurrentExam] = useState<Exam | null>(null);
   const [examStarted, setExamStarted] = useState(false);
   const [examCompleted, setExamCompleted] = useState(false);
@@ -454,10 +455,10 @@ export default function StudentExam() {
   if (!currentExam && availableExams.length === 0) {
     return (
       <div className="flex min-h-screen bg-gray-50">
-        <StudentSidebar />
-        
-        <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-          <StudentHeader />
+      <StudentSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <StudentHeader isCollapsed={isCollapsed} />
           
           <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
             <div className="max-w-4xl mx-auto">
@@ -489,11 +490,11 @@ export default function StudentExam() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50" ref={examContainerRef}>
-      {!examStarted && <StudentSidebar />}
+    <div className="flex min-h-screen bg-gray-50">
+      <StudentSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <div className={`flex-1 ${!examStarted && !isMobile ? 'ml-64' : ''} transition-all duration-300`}>
-        {!examStarted && <StudentHeader />}
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <StudentHeader isCollapsed={isCollapsed} />
         
         {/* Warning Modal */}
         {showWarning && (

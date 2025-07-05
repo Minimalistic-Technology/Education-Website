@@ -1,23 +1,26 @@
 "use client";
 import { useState, useEffect } from "react";
+import api from "@/utils/api";
+import axios from "axios";
 import Image from "next/image";
 import StudentSidebar from "../../components/StudentSidebar";
 import StudentHeader from "../../components/StudentHeader";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
   Calendar,
-  Edit3, 
-  Camera, 
-  Save, 
+  Edit3,
+  Camera,
+  Save,
   X,
   GraduationCap,
   Clock,
 } from "lucide-react";
 
 interface StudentProfile {
+  _id?: string; // backend document _id
   personalInfo: {
     fullName: string;
     studentId: string;
@@ -44,42 +47,41 @@ interface StudentProfile {
 
 const StudentProfilePage = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<StudentProfile>({
-    personalInfo: {
-      fullName: "Alex Johnson",
-      studentId: "CS2021001",
-      email: "alex.johnson@university.edu",
-      phone: "+1 (555) 123-4567",
-      dateOfBirth: "1999-03-15",
-      address: "123 University Street, College Town, CT 06511",
-      emergencyContact: "+1 (555) 987-6543",
-      bloodGroup: "O+"
-    },
-    academic: {
-      program: "Bachelor of Computer Science",
-      year: "3rd Year",
-      semester: "6th Semester",
-      batch: "2021-2025",
-      advisor: "Dr. Sarah Mitchell",
-      enrollmentDate: "2021-09-01",
-      expectedGraduation: "2025-06-15"
-    },
-    performance: {
-      currentGPA: 3.8,
-    }
-  });
+  const [loading, setLoading] = useState(true);
 
-  const [editedProfile, setEditedProfile] = useState(profile);
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [editedProfile, setEditedProfile] = useState<StudentProfile | null>(null);
+
+  const studentId = "STU5678"; // 🔷 Replace with actual studentId, maybe from auth/session
 
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  // fetch profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get(`/students`);
+        const student = res.data.find(
+          (s: StudentProfile) => s.personalInfo.studentId === studentId
+        );
+        setProfile(student);
+        setEditedProfile(student);
+        setLoading(false);
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+        setLoading(false);
+      }
+    };
+    fetchProfile();
   }, []);
 
   const handleEdit = () => {
@@ -87,9 +89,18 @@ const StudentProfilePage = () => {
     setEditedProfile(profile);
   };
 
-  const handleSave = () => {
-    setProfile(editedProfile);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!editedProfile || !editedProfile._id) return;
+    try {
+      const res = await axios.put(
+        `http://localhost:5000/api/students/${editedProfile._id}`,
+        editedProfile
+      );
+      setProfile(res.data);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to save profile", err);
+    }
   };
 
   const handleCancel = () => {
@@ -97,21 +108,42 @@ const StudentProfilePage = () => {
     setIsEditing(false);
   };
 
-  const handleInputChange = (section: keyof StudentProfile, field: string, value: string) => {
-    setEditedProfile(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }));
+  const handleInputChange = (
+    section: keyof StudentProfile,
+    field: string,
+    value: string
+  ) => {
+    if (!editedProfile) return;
+
+    setEditedProfile((prev) => {
+      if (!prev) return prev;
+
+      const sectionData = prev[section] as Record<string, any>;
+
+      return {
+        ...prev,
+        [section]: {
+          ...sectionData,
+          [field]: value,
+        },
+      };
+    });
   };
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
+
+  if (!profile) {
+    return <div className="p-8 text-center">Profile not found</div>;
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <StudentSidebar />
-      <div className={`flex-1 ${isMobile ? '' : 'ml-64'} transition-all duration-300`}>
-        <StudentHeader />
+      <StudentSidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      
+      <div className={`flex-1 ${isMobile ? '' : isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+        <StudentHeader isCollapsed={isCollapsed} />
         
         <main className="pt-20 px-4 md:px-6 lg:px-8 pb-8">
           {/* Header Section */}
@@ -158,15 +190,15 @@ const StudentProfilePage = () => {
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="relative">
                 <div className="flex-shrink-0">
-                                <Image
-                                  src="/images/prof.png"
-                                  alt="Profile Logo"
-                                  width={100}
-                                  height={100}
-                                  className="rounded-full shadow-md border-2 border-emerald-300"
-                                  priority
-                                />
-                              </div>
+                  <Image
+                    src="/images/prof.png"
+                    alt="Profile Logo"
+                    width={100}
+                    height={100}
+                    className="rounded-full shadow-md border-2 border-emerald-300"
+                    priority
+                  />
+                </div>
                 {isEditing && (
                   <button className="absolute bottom-0 right-0 w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white hover:bg-emerald-700 transition-colors">
                     <Camera size={16} />
@@ -198,9 +230,9 @@ const StudentProfilePage = () => {
                     {isEditing ? (
                       <input
                         type="text"
-                        value={editedProfile.personalInfo.fullName}
+                        value={editedProfile?.personalInfo.fullName || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'fullName', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     ) : (
                       <p className="text-gray-900 font-medium">{profile.personalInfo.fullName}</p>
@@ -221,9 +253,9 @@ const StudentProfilePage = () => {
                   {isEditing ? (
                     <input
                       type="email"
-                      value={editedProfile.personalInfo.email}
+                      value={editedProfile?.personalInfo.email || ''}
                       onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     />
                   ) : (
                     <p className="text-gray-900">{profile.personalInfo.email}</p>
@@ -239,9 +271,9 @@ const StudentProfilePage = () => {
                     {isEditing ? (
                       <input
                         type="tel"
-                        value={editedProfile.personalInfo.phone}
+                        value={editedProfile?.personalInfo.phone || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     ) : (
                       <p className="text-gray-900">{profile.personalInfo.phone}</p>
@@ -256,9 +288,9 @@ const StudentProfilePage = () => {
                     {isEditing ? (
                       <input
                         type="date"
-                        value={editedProfile.personalInfo.dateOfBirth}
+                        value={editedProfile?.personalInfo.dateOfBirth || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'dateOfBirth', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     ) : (
                       <p className="text-gray-900">{new Date(profile.personalInfo.dateOfBirth).toLocaleDateString()}</p>
@@ -273,10 +305,10 @@ const StudentProfilePage = () => {
                   </label>
                   {isEditing ? (
                     <textarea
-                      value={editedProfile.personalInfo.address}
+                      value={editedProfile?.personalInfo.address || ''}
                       onChange={(e) => handleInputChange('personalInfo', 'address', e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     />
                   ) : (
                     <p className="text-gray-900">{profile.personalInfo.address}</p>
@@ -289,9 +321,9 @@ const StudentProfilePage = () => {
                     {isEditing ? (
                       <input
                         type="tel"
-                        value={editedProfile.personalInfo.emergencyContact}
+                        value={editedProfile?.personalInfo.emergencyContact || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'emergencyContact', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     ) : (
                       <p className="text-gray-900">{profile.personalInfo.emergencyContact}</p>
@@ -302,9 +334,9 @@ const StudentProfilePage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
                     {isEditing ? (
                       <select
-                        value={editedProfile.personalInfo.bloodGroup}
+                        value={editedProfile?.personalInfo.bloodGroup || ''}
                         onChange={(e) => handleInputChange('personalInfo', 'bloodGroup', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-gray-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       >
                         <option>A+</option>
                         <option>A-</option>
@@ -378,10 +410,10 @@ const StudentProfilePage = () => {
                 {/* Academic Performance Details */}
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <h4 className="font-semibold text-gray-900 mb-3">Academic Performance</h4>
-                    <div className="text-center p-3 bg-emerald-50 rounded-lg">
-                      <div className="text-lg font-bold text-emerald-700">{profile.performance.currentGPA}/5.0</div>
-                      <div className="text-sm text-emerald-600">Current CGPA</div>
-                    </div>
+                  <div className="text-center p-3 bg-emerald-50 rounded-lg">
+                    <div className="text-lg font-bold text-emerald-700">{profile.performance.currentGPA}/5.0</div>
+                    <div className="text-sm text-emerald-600">Current CGPA</div>
+                  </div>
                 </div>
               </div>
             </div>
